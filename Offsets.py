@@ -35,7 +35,7 @@ Functions = [
 	#\xE8\x00\x00\x00\x00\xA1\x00\x00\x00\x00\x85\xC0\x74\x0F\x8B x????x????xxxxx
 	["SetSkin", "E8 ? ? ? ? 8B 0E 8B F8 8B 87", 2],
 	#\xE8\x00\x00\x00\x00\x8B\x0E\x8B\xF8\x8B\x87 x????xxxxxx
-	["GetSpellData", "E8 ? ? ? ? 66 85 C0 74 06", 2], 
+	["GetSpellData", "E8 ? ? ? ? 66 85 C0 74 06", 2], # aka. GetSpellState
 	#\xE8\x00\x00\x00\x00\x66\x85\xC0\x74\x06 x????xxxxx
 	["PrintChat", "E8 ? ? ? ? C6 44 24 ? ? 85 DB 74 76 8D 44 24 14", 2], 
 	#\xE8\x00\x00\x00\x00\xC6\x44\x24\x00\x00\x85\xDB\x74\x76\x8D\x44\x24\x14 x????xxx??xxxxxxxx

@@ -1,0 +1,15 @@
+.rdata:00EFF710 aGameobject     db 'GameObject',0       ; DATA XREF: sub_217BA0+17↑o
+.rdata:00EFF710                                         ; sub_2C5A30+15F↑o
+.rdata:00EFF71B                 align 4
+.rdata:00EFF71C aAttackableunit db 'AttackableUnit',0   ; DATA XREF: sub_217B20+17↑o
+
+dispatch table for eventhandler?
+.rdata:00EE6754 ___guard_check_icall_fptr dd offset nullsub_1
+.rdata:00EE6754                                         ; DATA XREF: j_nullsub_1↑r
+.rdata:00EE6754                                         ; _CallSETranslator(EHExceptionRecord *,EHRegistrationNode *,void *,void *,_s_FuncInfo const *,int,EHRegistrationNode *)+97↑r ...
+.rdata:00EE6758 unk_EE6758      db    0                 ; DATA XREF: __scrt_common_main_seh(void)+71↑o
+.rdata:00EE6759                 db    0
+.rdata:00EE675A                 db    0
+.rdata:00EE675B                 db    0
+.rdata:00EE675C                 dd offset sub_E4CBBE
+.rdata:00EE6760                 dd offset sub_1581EC
