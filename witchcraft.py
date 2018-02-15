@@ -1,23 +1,47 @@
 # Author: Uhrwerk
-# Version: 1.0
+# Version: 1.1
 
 # Notes
 # Lacking Error Handling
+# Add Missile, Game Modes & BuffTypes
 
 # Imports
 from idc import BADADDR, INF_BASEADDR, SEARCH_DOWN, FUNCATTR_START, FUNCATTR_END
 import idc
 import idaapi
+import idautils
 import datetime
 
 # Patterns (Pattern, Type(1 = Direct, 2 = Call)) 
 
+# Champion Data 
+# AttackSpeedPerLevel xref
+
 # AttackableUnit
 au_patterns = [
 	["83 EC 0C 53 55 56 8B F1 57 8B 06", 1], # 1 .. FriendlyTooltip
-	["E8 ? ? ? ? 8B CF E8 ? ? ? ? 6A 00 68 ? ? ? ?", 2], #2 mAllShield
-	["E8 ? ? ? ? 5E 5B 83 C4 0C C2 04", 2], #3 mGold
+	["E8 ? ? ? ? 8B CF E8 ? ? ? ? 6A 00 68 ? ? ? ?", 2], #2 .. mAllShield
+	["E8 ? ? ? ? 5E 5B 83 C4 0C C2 04", 2], #3 .. mGold
 ]
+
+# MissileData
+md_patterns = [
+	["", 1] # 1 .. mAffectsTypeFlags
+]
+
+# CharIntermediate
+ci_patterns = [
+	["E8 ? ? ? ? 8B 4C 24 3C 8D B5", 2], # 1 .. mPrimaryARRegenRateRep
+	["E8 ? ? ? ? 8B 5C 24 24 8D B5", 2], # 2 .. mMoveSpeedBaseIncrease
+	["E8 ? ? ? ? 8B 9E ? ? ? ? 8D 8E ? ? ? ? 83 C4 14", 2], # 3 .. mPercentBonusArmorPenetration
+	["E8 ? ? ? ? 8B 9E ? ? ? ? 8D BE ? ? ? ? 83 C4 28", 2], # 4 .. mPassiveCooldownTotalTime
+]
+
+# Game Modes
+# 83 EC 0C 53 56 57 8B 7C 24 1C 8B F1 8B
+
+# Status Effects
+# xref Drowsy or Asleep
 
 # Functions
 def parse_decls(inputtype, flags = 0):
@@ -50,6 +74,7 @@ def find_func_call_pattern(pattern): # Call to Function
 def generate_data_from_offset(offset): # credits to ferhat, or whoever wrote this
 	found_values = {}
 	chunks = idautils.Chunks(offset)
+	
 	for begin, end in chunks:
 		name = ""
 		offset = -1
@@ -96,13 +121,14 @@ def Main():
 	print("Why do they keep breaking...")
 	print("")
 	
-	# Find AttackableUnit Data
+	# Find Object Data
 	found_values_au = {}
-	
-	for pattern in au_patterns: 
+	for pattern in au_patterns:
 		if pattern[1] == 1: offset = find_func_pattern(pattern[0])
 		if pattern[1] == 2: offset = find_func_call_pattern(pattern[0])
-		#print(dec_to_hex(offset))
+		if offset == 0: 
+			print("[AU]: Invalid Pattern {}").format(pattern[0])
+			continue
 		
 		data = generate_data_from_offset(offset)
 		for k, v in data.iteritems():
@@ -111,6 +137,22 @@ def Main():
 	
 	found_values_au = sorted(found_values_au.iteritems())
 	print(found_values_au)
+	
+	found_values_ci = {}
+	for pattern in ci_patterns:
+		if pattern[1] == 1: offset = find_func_pattern(pattern[0])
+		if pattern[1] == 2: offset = find_func_call_pattern(pattern[0])
+		if offset == 0: 
+			print("[CI]: Invalid Pattern {}").format(pattern[0])
+			continue
+			
+		data = generate_data_from_offset(offset)
+		for k, v in data.iteritems():
+			if k == -1: continue # Invalid Addr.
+			found_values_ci[k] = v
+	
+	found_values_ci = sorted(found_values_ci.iteritems())
+	print(found_values_ci)
 	
 	# Write to File
 	
