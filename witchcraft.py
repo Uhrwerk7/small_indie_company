@@ -17,7 +17,7 @@ import datetime
 
 # Globals
 DumpOrApply = -1 # 0 = Dump, 1 = Apply
-DumpType = 1 # 0 = Inheritance, 1 = In-Class (Inheritance costs one more Instruction)
+DumpType = 0 # 0 = Inheritance, 1 = In-Class (Inheritance costs one more Instruction)
 
 #region Patterns (Pattern, Type(1 = Direct, 2 = Call)) 
 
@@ -155,10 +155,7 @@ objmgr_class = ""
 #endregion
 
 #region TypeMappings
-	
-
-	def get_type_by_name(name):
-		
+def get_type_by_name(name):
 	return "float"
 #endregion
 
@@ -225,7 +222,7 @@ def Main():
 
 		#region UnitData
 		ud_enum = "enum UnitData_Offsets\n{\n"
-		ud_class = "class UnitData\n{{\n{}public:\n".format("private:\n\tstatic const intptr_t Offset = 0xE50;\n\n") # Fix static Offset
+		ud_class = "class UnitData\n{{\n{}public:\n".format("private:\n\tstatic const intptr_t Offset = " + ud_object_offset + ";\n\n") # Fix static Offset
 		
 		for k, v in found_values_ud:
 			ud_enum += "\t {} = {},\n".format(v, dec_to_hex(k))
