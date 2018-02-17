@@ -3,10 +3,10 @@
 
 # Notes
 # Lacking Error Handling
-# Add Missile, Game Modes & BuffTypes
-# CharIntermediate is at 0xE50 for 8.3, can we automate finding this? 
+# Add Missile, Game Modes & Status Effects
+# UnitData/CharIntermediate is at 0xE50 for 8.3, can we automate finding this? 
 # I still want to automate the appliance of a struct in IDA, so perhaps we need two modes (dumping & applying) 
-# 
+
 # Imports
 from idc import BADADDR, INF_BASEADDR, SEARCH_DOWN, FUNCATTR_START, FUNCATTR_END
 import idc
@@ -14,7 +14,7 @@ import idaapi
 import idautils
 import datetime
 
-# Patterns (Pattern, Type(1 = Direct, 2 = Call)) 
+#region Patterns (Pattern, Type(1 = Direct, 2 = Call)) 
 
 # Champion Data 
 # AttackSpeedPerLevel xref
@@ -44,8 +44,9 @@ ud_patterns = [
 
 # Status Effects
 # xref Drowsy or Asleep
+#endregion
 
-# Functions
+#region Functions
 def parse_decls(inputtype, flags = 0):
 	ret = ida_typeinf.idc_parse_types(inputtype, flags)
 	return ret # Error Handling?
@@ -119,7 +120,8 @@ def generate_data_from_offset(offset): # credits to ferhat, or whoever wrote thi
 	
 def dec_to_hex(num):
 	return "0x%0.2X" % num
-	
+#endregion
+
 # Witchcraft
 def Main():
 	print("")
@@ -127,7 +129,7 @@ def Main():
 	print("Why do they keep breaking...")
 	print("")
 	
-	# Find Object Data
+	#region ObjectData
 	found_values_au = {}
 	for pattern in au_patterns:
 		if pattern[1] == 1: offset = find_func_pattern(pattern[0])
@@ -143,10 +145,9 @@ def Main():
 	
 	found_values_au = sorted(found_values_au.iteritems())
 	print(found_values_au)
-	
-	
-	
-	# Unit Data
+	#endregion
+
+	#region UnitData
 	found_values_ud = {}
 	for pattern in ud_patterns:
 		if pattern[1] == 1: offset = find_func_pattern(pattern[0])
@@ -162,29 +163,21 @@ def Main():
 	
 	found_values_ud = sorted(found_values_ud.iteritems())
 	
-	#ud_struct = "struct UnitData\n{\n"
 	ud_enum = "enum UnitData_Offsets\n{\n"
 	ud_class = "class UnitData\n{\npublic:\n"
 	
-	#previous = 0
-	#counter = 0
 	for k, v in found_values_ud:
-		#difference = k - previous
-		#previous = k
-		
-		#ud_struct += "\tchar Padding{}[{}];\n".format(counter, dec_to_hex(difference))
-		#ud_struct += "\tfloat {}; // {}\n".format(v, dec_to_hex(k))
 		ud_enum += "\t {} = {},\n".format(v, dec_to_hex(k))
 		
-		ud_class += "\tfloat {}()\n\t{{\n".format(v)
+		ud_class += "\tfloat {}()\n\t{{\n".format(v[1:]) # the 1: splices the first char
 		ud_class += "\t\treturn *(float*)((intptr_t)this + UnitData_Offsets::{});\n\t}}\n\n".format(v)
-		#counter += 1
 		
 	ud_enum += "};"
 	ud_class += "};"
 	print(ud_enum)
 	print("")
 	print(ud_class)
+	#endregion 
 	
 	# Write to File
 	
