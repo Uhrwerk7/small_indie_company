@@ -1,7 +1,0 @@
-add one more deref to localplayer
-A60
-
-CharIntermediate is at 0xE50 for 8.3,
-Padding11 = 0x41375844 "@ü¶\n"
-we are off 28 (1C) on base attack damage
-fix by reading from "this" and the offset, simpler solution
