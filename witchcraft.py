@@ -6,6 +6,7 @@
 # Add Missile, Game Modes & Status Effects
 # UnitData/CharIntermediate is at 0xE50 for 8.3, can we automate finding this? 
 # I still want to automate the appliance of a struct in IDA, so perhaps we need two modes (dumping & applying) 
+# Automatic Type Deduction would be nice, but probably not feasible. 
 
 # Imports
 from idc import BADADDR, INF_BASEADDR, SEARCH_DOWN, FUNCATTR_START, FUNCATTR_END
@@ -16,7 +17,7 @@ import datetime
 
 # Globals
 DumpOrApply = -1 # 0 = Dump, 1 = Apply
-DumpType = -1 # 0 = Inheritance, 1 = In-Class
+DumpType = 1 # 0 = Inheritance, 1 = In-Class (Inheritance costs one more Instruction)
 
 #region Patterns (Pattern, Type(1 = Direct, 2 = Call)) 
 
@@ -148,8 +149,17 @@ def dec_to_hex(num):
 
 #region Static
 au_class = ""
-om_class = ""
+obj_class = ""
 ud_object_offset = "0xE50"
+objmgr_class = ""
+#endregion
+
+#region TypeMappings
+	
+
+	def get_type_by_name(name):
+		
+	return "float"
 #endregion
 
 # Witchcraft
@@ -160,65 +170,76 @@ def Main():
 	print("")
 	
 	#region Dumping
-	#region ObjectData
-	#found_values_au = {}
-	#for pattern in au_patterns:
-	#	if pattern[1] == 1: offset = find_func_pattern(pattern[0])
-	#	if pattern[1] == 2: offset = find_func_call_pattern(pattern[0])
-	#	if offset == 0: 
-	#		print("[AU]: Invalid Pattern {}").format(pattern[0])
-	#		continue
-	#	
-	#	data = generate_data_from_offset(offset)
-	#	for k, v in data.iteritems():
-	#		if k == -1: continue # Invalid Addr.
-	#		found_values_au[k] = v
-	
-	#found_values_au = sorted(found_values_au.iteritems())
-
 	found_values_au = get_values_from_patterns(au_patterns)
-	au_enum = "enum AttackableUnit_Offsets\n{\n"
-
-	for k, v in found_values_au:
-		au_enum += "\t {} = {},\n".format(v, dec_to_hex(k))
-
-	au_enum += "};"
-	print(au_enum)
-	print("")
-	#endregion
-
-	#region UnitData
-	#found_values_ud = {}
-	#for pattern in ud_patterns:
-	#	if pattern[1] == 1: offset = find_func_pattern(pattern[0])
-	#	if pattern[1] == 2: offset = find_func_call_pattern(pattern[0])
-	#	if offset == 0: 
-	#		print("[UD]: Invalid Pattern {}").format(pattern[0])
-	#		continue
-	#		
-	#	data = generate_data_from_offset(offset)
-	#	for k, v in data.iteritems():
-	#		if k == -1: continue # Invalid Addr.
-	#		found_values_ud[k] = v
-	
-	#found_values_ud = sorted(found_values_ud.iteritems())
-	
 	found_values_ud = get_values_from_patterns(ud_patterns)
-	ud_enum = "enum UnitData_Offsets\n{\n"
-	ud_class = "class UnitData\n{{\n{}public:\n".format("private:\n\tstatic const intptr_t Offset = 0xE50;\n\n") # Fix static Offset
+
+	if DumpType == 0:
+		#region ObjectData
+		au_enum = "enum AttackableUnit_Offsets\n{\n"
+
+		for k, v in found_values_au:
+			au_enum += "\t {} = {},\n".format(v, dec_to_hex(k))
+
+		au_enum += "};"
+		print(au_enum)
+		print("")
+		#endregion
+
+		#region UnitData
+		ud_enum = "enum UnitData_Offsets\n{\n"
+		ud_class = "class UnitData\n{{\n{}public:\n".format("private:\n\tstatic const intptr_t Offset = 0xE50;\n\n") # Fix static Offset
+		
+		for k, v in found_values_ud:
+			ud_enum += "\t {} = {},\n".format(v, dec_to_hex(k))
+			
+			ud_class += "\t__forceinline float {}()\n\t{{\n".format(v[1:]) # the 1: splices the first char
+			ud_class += "\t\treturn *(float*)(((intptr_t)this + Offset) + UnitData_Offsets::{});\n\t}}\n\n".format(v)
+			
+		ud_enum += "};"
+		ud_class += "};"
+		print(ud_enum)
+		print("")
+		print(ud_class)
+		#endregion
 	
-	for k, v in found_values_ud:
-		ud_enum += "\t {} = {},\n".format(v, dec_to_hex(k))
+	if DumpType == 1:
+		#region ObjectData
+		au_enum = "class Object\n"
+		au_enum += "{\npublic:\n\n"
+		au_enum += "private:\n"
+
+		padding = 0
+		counter = 0
+		for k, v in found_values_au:
+			padding = k - padding
+
+			au_enum += "\t char Padding{}[{}]\n".format(counter, dec_to_hex(padding))
+			au_enum += "\t {} = {},\n".format(v, dec_to_hex(k))
+
+			counter += 1
+
+		au_enum += "};"
+		print(au_enum)
+		print("")
+		#endregion
+
+		#region UnitData
+		ud_enum = "enum UnitData_Offsets\n{\n"
+		ud_class = "class UnitData\n{{\n{}public:\n".format("private:\n\tstatic const intptr_t Offset = 0xE50;\n\n") # Fix static Offset
 		
-		ud_class += "\t__forceinline float {}()\n\t{{\n".format(v[1:]) # the 1: splices the first char
-		ud_class += "\t\treturn *(float*)(((intptr_t)this + Offset) + UnitData_Offsets::{});\n\t}}\n\n".format(v)
-		
-	ud_enum += "};"
-	ud_class += "};"
-	print(ud_enum)
-	print("")
-	print(ud_class)
-	#endregion 
+		for k, v in found_values_ud:
+			ud_enum += "\t {} = {},\n".format(v, dec_to_hex(k))
+			
+			ud_class += "\t__forceinline float {}()\n\t{{\n".format(v[1:]) # the 1: splices the first char
+			ud_class += "\t\treturn *(float*)(((intptr_t)this + Offset) + UnitData_Offsets::{});\n\t}}\n\n".format(v)
+			
+		ud_enum += "};"
+		ud_class += "};"
+		#print(ud_enum)
+		#print("")
+		#print(ud_class)
+		#endregion
+
 	#endregion
 
 	# Write to File
