@@ -1,10 +1,12 @@
 # Author: Uhrwerk
-# Version: 1.1
+# Version: 1.2
 
 # Notes
 # Lacking Error Handling
 # Add Missile, Game Modes & BuffTypes
-
+# CharIntermediate is at 0xE50 for 8.3, can we automate finding this? 
+# I still want to automate the appliance of a struct in IDA, so perhaps we need two modes (dumping & applying) 
+# 
 # Imports
 from idc import BADADDR, INF_BASEADDR, SEARCH_DOWN, FUNCATTR_START, FUNCATTR_END
 import idc
@@ -29,8 +31,8 @@ md_patterns = [
 	["", 1] # 1 .. mAffectsTypeFlags
 ]
 
-# CharIntermediate
-ci_patterns = [
+# Unit Data
+ud_patterns = [
 	["E8 ? ? ? ? 8B 4C 24 3C 8D B5", 2], # 1 .. mPrimaryARRegenRateRep
 	["E8 ? ? ? ? 8B 5C 24 24 8D B5", 2], # 2 .. mMoveSpeedBaseIncrease
 	["E8 ? ? ? ? 8B 9E ? ? ? ? 8D 8E ? ? ? ? 83 C4 14", 2], # 3 .. mPercentBonusArmorPenetration
@@ -70,6 +72,10 @@ def find_func_call_pattern(pattern): # Call to Function
 	addr = idc.FindBinary(0, SEARCH_DOWN, pattern)
 	if addr == BADADDR: return 0
 	return idc.GetOperandValue(addr, 0)
+	
+def is_user_name(ea):
+  f = idc.GetFlags(ea)
+  return idc.hasUserName(f)
 
 def generate_data_from_offset(offset): # credits to ferhat, or whoever wrote this
 	found_values = {}
@@ -138,21 +144,47 @@ def Main():
 	found_values_au = sorted(found_values_au.iteritems())
 	print(found_values_au)
 	
-	found_values_ci = {}
-	for pattern in ci_patterns:
+	
+	
+	# Unit Data
+	found_values_ud = {}
+	for pattern in ud_patterns:
 		if pattern[1] == 1: offset = find_func_pattern(pattern[0])
 		if pattern[1] == 2: offset = find_func_call_pattern(pattern[0])
 		if offset == 0: 
-			print("[CI]: Invalid Pattern {}").format(pattern[0])
+			print("[UD]: Invalid Pattern {}").format(pattern[0])
 			continue
 			
 		data = generate_data_from_offset(offset)
 		for k, v in data.iteritems():
 			if k == -1: continue # Invalid Addr.
-			found_values_ci[k] = v
+			found_values_ud[k] = v
 	
-	found_values_ci = sorted(found_values_ci.iteritems())
-	print(found_values_ci)
+	found_values_ud = sorted(found_values_ud.iteritems())
+	
+	#ud_struct = "struct UnitData\n{\n"
+	ud_enum = "enum UnitData_Offsets\n{\n"
+	ud_class = "class UnitData\n{\npublic:\n"
+	
+	#previous = 0
+	#counter = 0
+	for k, v in found_values_ud:
+		#difference = k - previous
+		#previous = k
+		
+		#ud_struct += "\tchar Padding{}[{}];\n".format(counter, dec_to_hex(difference))
+		#ud_struct += "\tfloat {}; // {}\n".format(v, dec_to_hex(k))
+		ud_enum += "\t {} = {},\n".format(v, dec_to_hex(k))
+		
+		ud_class += "\tfloat {}()\n\t{{\n".format(v)
+		ud_class += "\t\treturn *(float*)((intptr_t)this + UnitData_Offsets::{});\n\t}}\n\n".format(v)
+		#counter += 1
+		
+	ud_enum += "};"
+	ud_class += "};"
+	print(ud_enum)
+	print("")
+	print(ud_class)
 	
 	# Write to File
 	
