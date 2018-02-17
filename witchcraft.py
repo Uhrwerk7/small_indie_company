@@ -1,5 +1,5 @@
 # Author: Uhrwerk
-# Version: 1.2
+# Version: 1.3
 
 # Notes
 # Lacking Error Handling
@@ -13,6 +13,10 @@ import idc
 import idaapi
 import idautils
 import datetime
+
+# Globals
+DumpOrApply = -1 # 0 = Dump, 1 = Apply
+DumpType = -1 # 0 = Inheritance, 1 = In-Class
 
 #region Patterns (Pattern, Type(1 = Direct, 2 = Call)) 
 
@@ -44,6 +48,7 @@ ud_patterns = [
 
 # Status Effects
 # xref Drowsy or Asleep
+
 #endregion
 
 #region Functions
@@ -117,9 +122,34 @@ def generate_data_from_offset(offset): # credits to ferhat, or whoever wrote thi
 			ea = idc.NextNotTail(ea)
 			
 	return found_values
+
+def get_values_from_patterns(patterns):
+	found_values = {}
 	
+	for pattern in patterns:
+		if pattern[1] == 1: offset = find_func_pattern(pattern[0])
+		if pattern[1] == 2: offset = find_func_call_pattern(pattern[0])
+		if offset == 0: 
+			print("[WARNING]: Invalid Pattern {}").format(pattern[0])
+			continue
+		
+		data = generate_data_from_offset(offset)
+		for k, v in data.iteritems():
+			if k == -1: continue # Invalid Addr.
+			found_values[k] = v
+	
+	found_values = sorted(found_values.iteritems())
+
+	return found_values
+
 def dec_to_hex(num):
 	return "0x%0.2X" % num
+#endregion
+
+#region Static
+au_class = ""
+om_class = ""
+ud_object_offset = "0xE50"
 #endregion
 
 # Witchcraft
@@ -129,48 +159,59 @@ def Main():
 	print("Why do they keep breaking...")
 	print("")
 	
+	#region Dumping
 	#region ObjectData
-	found_values_au = {}
-	for pattern in au_patterns:
-		if pattern[1] == 1: offset = find_func_pattern(pattern[0])
-		if pattern[1] == 2: offset = find_func_call_pattern(pattern[0])
-		if offset == 0: 
-			print("[AU]: Invalid Pattern {}").format(pattern[0])
-			continue
-		
-		data = generate_data_from_offset(offset)
-		for k, v in data.iteritems():
-			if k == -1: continue # Invalid Addr.
-			found_values_au[k] = v
+	#found_values_au = {}
+	#for pattern in au_patterns:
+	#	if pattern[1] == 1: offset = find_func_pattern(pattern[0])
+	#	if pattern[1] == 2: offset = find_func_call_pattern(pattern[0])
+	#	if offset == 0: 
+	#		print("[AU]: Invalid Pattern {}").format(pattern[0])
+	#		continue
+	#	
+	#	data = generate_data_from_offset(offset)
+	#	for k, v in data.iteritems():
+	#		if k == -1: continue # Invalid Addr.
+	#		found_values_au[k] = v
 	
-	found_values_au = sorted(found_values_au.iteritems())
-	print(found_values_au)
+	#found_values_au = sorted(found_values_au.iteritems())
+
+	found_values_au = get_values_from_patterns(au_patterns)
+	au_enum = "enum AttackableUnit_Offsets\n{\n"
+
+	for k, v in found_values_au:
+		au_enum += "\t {} = {},\n".format(v, dec_to_hex(k))
+
+	au_enum += "};"
+	print(au_enum)
+	print("")
 	#endregion
 
 	#region UnitData
-	found_values_ud = {}
-	for pattern in ud_patterns:
-		if pattern[1] == 1: offset = find_func_pattern(pattern[0])
-		if pattern[1] == 2: offset = find_func_call_pattern(pattern[0])
-		if offset == 0: 
-			print("[UD]: Invalid Pattern {}").format(pattern[0])
-			continue
-			
-		data = generate_data_from_offset(offset)
-		for k, v in data.iteritems():
-			if k == -1: continue # Invalid Addr.
-			found_values_ud[k] = v
+	#found_values_ud = {}
+	#for pattern in ud_patterns:
+	#	if pattern[1] == 1: offset = find_func_pattern(pattern[0])
+	#	if pattern[1] == 2: offset = find_func_call_pattern(pattern[0])
+	#	if offset == 0: 
+	#		print("[UD]: Invalid Pattern {}").format(pattern[0])
+	#		continue
+	#		
+	#	data = generate_data_from_offset(offset)
+	#	for k, v in data.iteritems():
+	#		if k == -1: continue # Invalid Addr.
+	#		found_values_ud[k] = v
 	
-	found_values_ud = sorted(found_values_ud.iteritems())
+	#found_values_ud = sorted(found_values_ud.iteritems())
 	
+	found_values_ud = get_values_from_patterns(ud_patterns)
 	ud_enum = "enum UnitData_Offsets\n{\n"
-	ud_class = "class UnitData\n{\npublic:\n"
+	ud_class = "class UnitData\n{{\n{}public:\n".format("private:\n\tstatic const intptr_t Offset = 0xE50;\n\n") # Fix static Offset
 	
 	for k, v in found_values_ud:
 		ud_enum += "\t {} = {},\n".format(v, dec_to_hex(k))
 		
-		ud_class += "\tfloat {}()\n\t{{\n".format(v[1:]) # the 1: splices the first char
-		ud_class += "\t\treturn *(float*)((intptr_t)this + UnitData_Offsets::{});\n\t}}\n\n".format(v)
+		ud_class += "\t__forceinline float {}()\n\t{{\n".format(v[1:]) # the 1: splices the first char
+		ud_class += "\t\treturn *(float*)(((intptr_t)this + Offset) + UnitData_Offsets::{});\n\t}}\n\n".format(v)
 		
 	ud_enum += "};"
 	ud_class += "};"
@@ -178,7 +219,8 @@ def Main():
 	print("")
 	print(ud_class)
 	#endregion 
-	
+	#endregion
+
 	# Write to File
 	
 	# Object + ObjectManager

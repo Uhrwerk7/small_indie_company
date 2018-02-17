@@ -3,6 +3,7 @@
 .rdata:00EFF71B                 align 4
 .rdata:00EFF71C aAttackableunit db 'AttackableUnit',0   ; DATA XREF: sub_217B20+17↑o
 
+
 dispatch table for eventhandler?
 .rdata:00EE6754 ___guard_check_icall_fptr dd offset nullsub_1
 .rdata:00EE6754                                         ; DATA XREF: j_nullsub_1↑r
@@ -13,3 +14,45 @@ dispatch table for eventhandler?
 .rdata:00EE675B                 db    0
 .rdata:00EE675C                 dd offset sub_E4CBBE
 .rdata:00EE6760                 dd offset sub_1581EC
+
+
+.data:011BA39C off_11BA39C     dd offset aGetnexus     ; DATA XREF: sub_160A10↑r
+.data:011BA39C                                         ; "GetNexus"
+.data:011BA3A0 off_11BA3A0     dd offset aGetunitpositio
+.data:011BA3A0                                         ; DATA XREF: sub_1618E0↑r
+.data:011BA3A0                                         ; "GetUnitPosition"
+.data:011BA3A4 off_11BA3A4     dd offset aDistancebetwee
+.data:011BA3A4                                         ; DATA XREF: sub_1582D0↑r
+.data:011BA3A4                                         ; "DistanceBetweenObjectAndPoint"
+.data:011BA3A8 off_11BA3A8     dd offset aGetunitmetadat
+.data:011BA3A8                                         ; DATA XREF: sub_158A70↑r
+.data:011BA3A8                                         ; "GetUnitMetadataValue"
+.data:011BA3AC off_11BA3AC     dd offset aUnithasunittag
+.data:011BA3AC                                         ; DATA XREF: sub_159140↑r
+.data:011BA3AC                                         ; "UnitHasUnitTag"
+.data:011BA3B0 off_11BA3B0     dd offset aGetunitskinnam
+.data:011BA3B0                                         ; DATA XREF: sub_159430↑r
+.data:011BA3B0                                         ; "GetUnitSkinName"
+.data:011BA3B4 off_11BA3B4     dd offset aGetunitbaseski
+.data:011BA3B4                                         ; DATA XREF: sub_1596B0↑r
+.data:011BA3B4                                         ; "GetUnitBaseSkinName"
+.data:011BA3B8 off_11BA3B8     dd offset aGetunitskinid
+.data:011BA3B8                                         ; DATA XREF: sub_1598F0↑r
+.data:011BA3B8                                         ; "GetUnitSkinID"
+.data:011BA3BC off_11BA3BC     dd offset aGetunitcurrent
+.data:011BA3BC                                         ; DATA XREF: sub_159AE0↑r
+.data:011BA3BC                                         ; "GetUnitCurrentHealthPercentage"
+.data:011BA3C0 off_11BA3C0     dd offset aGeneraterandom
+.data:011BA3C0                                         ; DATA XREF: sub_159D30↑r
+.data:011BA3C0                                         ; "GenerateRandomFloat"
+.data:011BA3C4 off_11BA3C4     dd offset aGeneraterandom_0
+.data:011BA3C4                                         ; DATA XREF: sub_15A220↑r
+.data:011BA3C4                                         ; "GenerateRandomInt"
+.data:011BA3C8 off_11BA3C8     dd offset aGetunittype  ; DATA XREF: sub_15A3F0↑r
+.data:011BA3C8                                         ; "GetUnitType"
+.data:011BA3CC off_11BA3CC     dd offset aGetunitteam  ; DATA XREF: sub_15A740↑r
+.data:011BA3CC                                         ; "GetUnitTeam"
+.data:011BA3D0 off_11BA3D0     dd offset aGetunitlevel ; DATA XREF: sub_15AF10↑r
+.data:011BA3D0                                         ; "GetUnitLevel"
+.data:011BA3D4 off_11BA3D4     dd offset aGetteamkills ; DATA XREF: sub_15B0B0↑r
+.data:011BA3D4                                         ; "GetTeamKills"
