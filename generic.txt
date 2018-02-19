@@ -29,3 +29,7 @@
 28:LevelPropSpawnerPoint 
 29:obj_Shop 
 30:obj_Turret
+
+time of post -> 8.2:
+anyways did some of u you reverse ObjAIBase class?
+it has at GameObject + 0x23c0 a pointer the CharData ( in case if some1 needs  ) but i like to know, does anybody know when this pointer gets initilized? constructor of AIBaseClient/AIHeroClient etc do not set this pointer and ObjAIBase constructor/creator sets it as default to null -.-

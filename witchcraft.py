@@ -1,13 +1,13 @@
 # Author: Uhrwerk
-# Version: 1.3
+# Version: 1.4
 
 # Notes
-# Lacking Error Handling
+# Lacking Error Handling (unlucky people shouldn't use my software i guess)
 # Add Missile, Game Modes & Status Effects
-# UnitData/CharIntermediate is at 0xE50 for 8.3, can we automate finding this? 
-# I still want to automate the appliance of a struct in IDA, so perhaps we need two modes (dumping & applying) 
-# Automatic Type Deduction would be nice, but probably not feasible. 
-# dont presort, add static offsets to an array of offsets, add them to the found_values then sort
+# Add Applying Mode
+# Automatic Type Deduction would be nice + getting the offset for char/charintermediate automaticly
+# fix k, v swapness
+# fix types (float) and add types in charintermediate
 
 # Imports
 from idc import BADADDR, INF_BASEADDR, SEARCH_DOWN, FUNCATTR_START, FUNCATTR_END
@@ -153,14 +153,18 @@ au_class = ""
 ud_object_offset = "0xE50"
 objmgr_class = ""
 
-obj_class_static = ""
+# type, size, name
+obj_class_static = [
+
+]
 
 #endregion
 
 #region TypeMappings
 Types = [
 	["int", 4, ["Champion", "mPARState", "mSARState", "mStopShieldFade", "mEvolvePoints", "mEvolveFlag", "mLevelRef", "mNumNeutralMinionsKilled", "mInputLocks", "mHealthBarCharacterIDForIcon"]],
-	["bool", 1, ["mPAREnabled", "mSAREnabled", "mIsUntargetableToAllies", "mIsUntargetableToEnemies", "mIsTargetable", "mSkillUpLevelDeltaReplicate"]]
+	["bool", 1, ["mPAREnabled", "mSAREnabled", "mIsUntargetableToAllies", "mIsUntargetableToEnemies", "mIsTargetable", "mSkillUpLevelDeltaReplicate"]],
+	["char", 1, ["mEmpoweredBitField"]],
 ]
 
 def get_type_by_name(name):
@@ -219,9 +223,16 @@ def Main():
 		obj_class += "{\npublic:\n\n"
 		#obj_class += "private:\n"
 
+		found_values_obj_ex = {}
+		for k, v in found_values_ud: 
+			found_values_obj_ex[k + 0xE50] = v
+		for k, v in found_values_au:
+			found_values_obj_ex[k] = v
+		found_values_obj_ex = sorted(found_values_obj_ex.iteritems())
+
 		current_location = 0
 		counter = 0
-		for k, v in found_values_au:
+		for k, v in found_values_obj_ex:
 			type = get_type_by_name(v)
 
 			obj_class += "\t unsigned char Padding{}[{}]; // {}\n".format(counter, dec_to_hex(k - current_location), dec_to_hex(current_location))
@@ -233,23 +244,6 @@ def Main():
 		obj_class += "};"
 		print(obj_class)
 		print("")
-		#endregion
-
-		#region UnitData
-		ud_enum = "enum UnitData_Offsets\n{\n"
-		ud_class = "class UnitData\n{{\n{}public:\n".format("private:\n\tstatic const intptr_t Offset = " + ud_object_offset + ";\n\n") # Fix static Offset
-		
-		for k, v in found_values_ud:
-			ud_enum += "\t {} = {},\n".format(v, dec_to_hex(k))
-			
-			ud_class += "\t__forceinline float {}()\n\t{{\n".format(v[1:]) # the 1: splices the first char
-			ud_class += "\t\treturn *(float*)(((intptr_t)this + Offset) + UnitData_Offsets::{});\n\t}}\n\n".format(v)
-			
-		ud_enum += "};"
-		ud_class += "};"
-		#print(ud_enum)
-		#print("")
-		#print(ud_class)
 		#endregion
 
 	#endregion
