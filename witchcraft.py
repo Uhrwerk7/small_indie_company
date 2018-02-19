@@ -7,6 +7,7 @@
 # UnitData/CharIntermediate is at 0xE50 for 8.3, can we automate finding this? 
 # I still want to automate the appliance of a struct in IDA, so perhaps we need two modes (dumping & applying) 
 # Automatic Type Deduction would be nice, but probably not feasible. 
+# dont presort, add static offsets to an array of offsets, add them to the found_values then sort
 
 # Imports
 from idc import BADADDR, INF_BASEADDR, SEARCH_DOWN, FUNCATTR_START, FUNCATTR_END
@@ -17,7 +18,7 @@ import datetime
 
 # Globals
 DumpOrApply = -1 # 0 = Dump, 1 = Apply
-DumpType = 0 # 0 = Inheritance, 1 = In-Class (Inheritance costs one more Instruction)
+DumpType = 1 # 0 = Inheritance, 1 = In-Class (Inheritance costs one more Instruction)
 
 #region Patterns (Pattern, Type(1 = Direct, 2 = Call)) 
 
@@ -149,14 +150,27 @@ def dec_to_hex(num):
 
 #region Static
 au_class = ""
-obj_class = ""
 ud_object_offset = "0xE50"
 objmgr_class = ""
+
+obj_class_static = ""
+
 #endregion
 
 #region TypeMappings
+Types = [
+	["int", 4, ["Champion", "mPARState", "mSARState", "mStopShieldFade", "mEvolvePoints", "mEvolveFlag", "mLevelRef", "mNumNeutralMinionsKilled", "mInputLocks", "mHealthBarCharacterIDForIcon"]],
+	["bool", 1, ["mPAREnabled", "mSAREnabled", "mIsUntargetableToAllies", "mIsUntargetableToEnemies", "mIsTargetable", "mSkillUpLevelDeltaReplicate"]]
+]
+
 def get_type_by_name(name):
-	return "float"
+	for type in Types:
+		for identifier in type[2]:
+			if name == identifier:
+				#print("Found {}").format(name)
+				return (type[0], type[1])
+
+	return ("float", 4) # Default
 #endregion
 
 # Witchcraft
@@ -184,7 +198,7 @@ def Main():
 
 		#region UnitData
 		ud_enum = "enum UnitData_Offsets\n{\n"
-		ud_class = "class UnitData\n{{\n{}public:\n".format("private:\n\tstatic const intptr_t Offset = 0xE50;\n\n") # Fix static Offset
+		ud_class = "class UnitData\n{{\n{}public:\n".format("private:\n\tstatic const intptr_t Offset = " + ud_object_offset + ";\n\n") # Fix static Offset
 		
 		for k, v in found_values_ud:
 			ud_enum += "\t {} = {},\n".format(v, dec_to_hex(k))
@@ -201,22 +215,23 @@ def Main():
 	
 	if DumpType == 1:
 		#region ObjectData
-		au_enum = "class Object\n"
-		au_enum += "{\npublic:\n\n"
-		au_enum += "private:\n"
+		obj_class = "class Object\n"
+		obj_class += "{\npublic:\n\n"
+		#obj_class += "private:\n"
 
-		padding = 0
+		current_location = 0
 		counter = 0
 		for k, v in found_values_au:
-			padding = k - padding
+			type = get_type_by_name(v)
 
-			au_enum += "\t char Padding{}[{}]\n".format(counter, dec_to_hex(padding))
-			au_enum += "\t {} = {},\n".format(v, dec_to_hex(k))
+			obj_class += "\t unsigned char Padding{}[{}]; // {}\n".format(counter, dec_to_hex(k - current_location), dec_to_hex(current_location))
+			obj_class += "\t {} {}; // {}\n".format(type[0], v, dec_to_hex(k))
 
+			current_location = k + type[1]
 			counter += 1
 
-		au_enum += "};"
-		print(au_enum)
+		obj_class += "};"
+		print(obj_class)
 		print("")
 		#endregion
 
