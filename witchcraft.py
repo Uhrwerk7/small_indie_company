@@ -18,12 +18,9 @@ import datetime
 
 # Globals
 DumpOrApply = -1 # 0 = Dump, 1 = Apply
-DumpType = 1 # 0 = Inheritance, 1 = In-Class (Inheritance costs one more Instruction)
+DumpType = 1 # 0 = Inheritance, 1 = In-Class
 
 #region Patterns (Pattern, Type(1 = Direct, 2 = Call)) 
-
-# Champion Data 
-# AttackSpeedPerLevel xref
 
 # AttackableUnit
 au_patterns = [
@@ -32,7 +29,7 @@ au_patterns = [
 	["E8 ? ? ? ? 5E 5B 83 C4 0C C2 04", 2], #3 .. mGold
 ]
 
-# MissileData
+# Missile Data
 md_patterns = [
 	["", 1] # 1 .. mAffectsTypeFlags
 ]
@@ -40,9 +37,14 @@ md_patterns = [
 # Unit Data
 ud_patterns = [
 	["E8 ? ? ? ? 8B 4C 24 3C 8D B5", 2], # 1 .. mPrimaryARRegenRateRep
-	["E8 ? ? ? ? 8B 5C 24 24 8D B5", 2], # 2 .. mMoveSpeedBaseIncrease
-	["E8 ? ? ? ? 8B 9E ? ? ? ? 8D 8E ? ? ? ? 83 C4 14", 2], # 3 .. mPercentBonusArmorPenetration
+	["E8 ? ? ? ? 83 C4 3C 8B CB", 2], # 2 .. mMoveSpeedBaseIncrease
+	["53 55 8B 6C 24 14 8B CD 56 8B 74 24 14 57 68 98 59 EF 00", 1], # 3 .. mPercentBonusArmorPenetration
 	["E8 ? ? ? ? 8B 9E ? ? ? ? 8D BE ? ? ? ? 83 C4 28", 2], # 4 .. mPassiveCooldownTotalTime
+]
+
+# Champion Data
+cd_patterns = [
+	["56 6A 00 6A 00 6A 00 6A 00 6A 08", 1], # .. mCharacterName
 ]
 
 # Game Modes
@@ -134,7 +136,7 @@ def get_values_from_patterns(patterns):
 		if offset == 0: 
 			print("[WARNING]: Invalid Pattern {}").format(pattern[0])
 			continue
-		
+			
 		data = generate_data_from_offset(offset)
 		for k, v in data.iteritems():
 			if k == -1: continue # Invalid Addr.
@@ -180,7 +182,7 @@ def get_type_by_name(name):
 # Witchcraft
 def Main():
 	print("")
-	print("Clockwork: Witchcraft (%s)" % datetime.datetime.now())
+	print("Uhrwerk: Witchcraft (%s)" % datetime.datetime.now())
 	print("Why do they keep breaking...")
 	print("")
 	
@@ -188,35 +190,6 @@ def Main():
 	found_values_au = get_values_from_patterns(au_patterns)
 	found_values_ud = get_values_from_patterns(ud_patterns)
 
-	if DumpType == 0:
-		#region ObjectData
-		au_enum = "enum AttackableUnit_Offsets\n{\n"
-
-		for k, v in found_values_au:
-			au_enum += "\t {} = {},\n".format(v, dec_to_hex(k))
-
-		au_enum += "};"
-		print(au_enum)
-		print("")
-		#endregion
-
-		#region UnitData
-		ud_enum = "enum UnitData_Offsets\n{\n"
-		ud_class = "class UnitData\n{{\n{}public:\n".format("private:\n\tstatic const intptr_t Offset = " + ud_object_offset + ";\n\n") # Fix static Offset
-		
-		for k, v in found_values_ud:
-			ud_enum += "\t {} = {},\n".format(v, dec_to_hex(k))
-			
-			ud_class += "\t__forceinline float {}()\n\t{{\n".format(v[1:]) # the 1: splices the first char
-			ud_class += "\t\treturn *(float*)(((intptr_t)this + Offset) + UnitData_Offsets::{});\n\t}}\n\n".format(v)
-			
-		ud_enum += "};"
-		ud_class += "};"
-		print(ud_enum)
-		print("")
-		print(ud_class)
-		#endregion
-	
 	if DumpType == 1:
 		#region ObjectData
 		obj_class = "class Object\n"
@@ -245,6 +218,11 @@ def Main():
 		print(obj_class)
 		print("")
 		#endregion
+
+		found_values_cd = get_values_from_patterns(cd_patterns)
+
+		for k, v in found_values_cd:
+			print("{} : {}").format(v, dec_to_hex(k))
 
 	#endregion
 

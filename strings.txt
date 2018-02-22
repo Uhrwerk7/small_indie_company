@@ -1,3 +1,4 @@
+8.3
 .rdata:00EFF710 aGameobject     db 'GameObject',0       ; DATA XREF: sub_217BA0+17↑o
 .rdata:00EFF710                                         ; sub_2C5A30+15F↑o
 .rdata:00EFF71B                 align 4
