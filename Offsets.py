@@ -17,17 +17,19 @@ Rename = -1
 
 # Offsets // Patterns // xref's (Type:: 1 => Pattern, 2 => Call Pattern, 3 => Reference)
 Functions = [
-	["IssueOrder", "81 EC ? ? ? ? 53 8B D9 C7 44 24", 1],
 	["Logger", "8D 44 24 14 50 FF 74 24 14 FF", 1], # Writes Debug Messages (Also printed when you attach VS Debugger)
+	["LogUIEvents", "53 55 56 8B F1 57 8B 7C 24 18", 1], # evtPlayerAttackMoveClick
+	#\x53\x55\x56\x8B\xF1\x57\x8B\x7C\x24\x18 xxxxxxxxxx
 	["CastSpell", "83 EC 34 53 55 8B 6C 24 40", 1], # ALE-229C053F / ERROR: Client Tried to cast a spell from an invalid slot: %d
 	#\x83\xEC\x34\x53\x55\x8B\x6C\x24\x40 xxxxxxxxx
-	#\x83\xEC\x2C\x53\x55\x56\x8B\x74\x24\x3C xxxxxxxxxx
 	["GetHealthbarPos", "8B 81 ? ? ? ? 85 C0 74 12", 1],	
 	#\x8B\x81\x00\x00\x00\x00\x85\xC0\x74\x12 xx????xxxx
 	["SendChat", "56 6A FF FF 74", 1],
 	#\x56\x6A\xFF\xFF\x74 xxxxx
 	["EventHandler", "83 EC 38 A1 ? ? ? ? 33 C4 89 44 24 34 53 8B D9 56 8B 74 24 48", 1],
-		
+	["MainLoop", "83 EC 08 53 8B D9 89 5C 24 04 8B 4B", 1], # Not directly the main loop, but you can hook into here (func called by the main loop)
+	#\x83\xEC\x08\x53\x8B\xD9\x89\x5C\x24\x04\x8B\x4B xxxxxxxxxxxx
+
 	["DrawTurretRange", "E8 ? ? ? ? 84 C0 75 1B 83", 2],
 	#\xE8\x00\x00\x00\x00\x84\xC0\x75\x1B\x83 x????xxxxx
 	["LevelUpSpell", "E8 ? ? ? ? A1 ? ? ? ? 85 C0 74 0F 8B", 2],
@@ -38,9 +40,9 @@ Functions = [
 	#\xE8\x00\x00\x00\x00\x66\x85\xC0\x74\x06 x????xxxxx
 	["PrintChat", "E8 ? ? ? ? C6 44 24 ? ? 85 DB 74 76 8D 44 24 14", 2], 
 	#\xE8\x00\x00\x00\x00\xC6\x44\x24\x00\x00\x85\xDB\x74\x76\x8D\x44\x24\x14 x????xxx??xxxxxxxx
-	["MainLoop", "E8 ? ? ? ? E8 ? ? ? ? 85 C0 74 07 8B 10 8B C8 FF 52", 2], # Not directly the main loop, but you can hook into here (func called by the main loop)
-	#\xE8\x00\x00\x00\x00\xE8\x00\x00\x00\x00\x85\xC0\x74\x07\x8B\x10\x8B\xC8\xFF\x52 x????x????xxxxxxxxxx
-	
+	["IssueOrder", "E8 ? ? ? ? 5D 5B 5F B0 01 5E 83 C4 14 C2 1C 00 FF", 2],
+	#\xE8\x00\x00\x00\x00\x5D\x5B\x5F\xB0\x01\x5E\x83\xC4\x14\xC2\x1C\x00\xFF x????xxxxxxxxxxxxx
+
 	#["ClientMain", "Invalid AttackDelayCastOffsetPercent!", 3]
 ]
 
@@ -55,8 +57,8 @@ Offsets = [
 	["ZoomClass", "A3 ? ? ? ? 8D 4C 24 20", 1, 0], # Globals/CameraConfig_CLASSIC (above cmp ZoomBase, 0)
 	["UnderMouseObject", "C7 05 ? ? ? ? ? ? ? ? E8 ? ? ? ? 83 C4 04 FF B4", 1, 0],
 	#\xC7\x05\x00\x00\x00\x00\x00\x00\x00\x00\xE8\x00\x00\x00\x00\x83\xC4\x04\xFF\xB4 xx????????x????xxxxx
-	
-	["Version", "68 ? ? ? ? E8 ? ? ? ? 83 C4 20 8D 4C 24 04", 2, 0],# "Version %s (%s/%s) [%s] <%s>%s"
+	["Cursor", "A1 ? ? ? ? 8B 40 14 85", 1, 1], # evtCameraSnap .. Leads to Mouse Position (8.4: ] + 0x14] + 0x10 = Vec3 of Mouse Position)
+	#\xA1\x00\x00\x00\x00\x8B\x40\x14\x85 x????xxxx
 ]
 
 # Finder Functions
